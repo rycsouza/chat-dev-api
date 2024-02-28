@@ -1,9 +1,5 @@
-const express = require("express");
-const axios = require("axios");
+const server = require("./src/config/custom-express");
 
-axios
-  .get("https://viacep.com.br/ws/01001000/json/")
-  .then((resp) => console.log(resp))
-  .catch((erro) => console.log(erro));
-
-console.log("server");
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || "http://127.0.0.1";
+server.listen(PORT, () => console.log(`Server is running | ${HOST}:${PORT}`));
