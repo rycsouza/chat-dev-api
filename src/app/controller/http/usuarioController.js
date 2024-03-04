@@ -10,7 +10,7 @@ class UsuarioController {
     let usuarioExistente = (
       await new Promise((resolve, reject) => {
         this.con.query(
-          `SELECT nome, username, avatar FROM usuarios WHERE email = '${usuario.email}' LIMIT 1;`,
+          `SELECT id, nome, username, avatar FROM usuarios WHERE email = '${usuario.email}' LIMIT 1;`,
           (erro, resultado) => {
             if (erro) return reject(erro);
             return resolve(resultado);
@@ -31,12 +31,21 @@ class UsuarioController {
       );
     });
 
-    if (result.affectedRows == 1)
-      return {
-        nome: usuario.name,
-        username: usuario.username,
-        avatar: usuario.picture,
-      };
+    if (result.affectedRows == 0) throw new Error("Falha ao fazer Login!");
+
+    let novoUsuario = (
+      await new Promise((resolve, reject) => {
+        this.con.query(
+          `SELECT id, nome, username, avatar FROM usuarios WHERE email = '${usuario.email}' LIMIT 1;`,
+          (erro, resultado) => {
+            if (erro) return reject(erro);
+            return resolve(resultado);
+          }
+        );
+      })
+    )[0];
+
+    return novoUsuario;
   }
 
   async show(usuario) {

@@ -16,18 +16,28 @@ module.exports = (server) => {
   });
 
   server.get("/profile", checkAuth, (req, resp) => {
-    let user = req.user;
-    if (req.query.username) user = { username: req.query.username };
+    let data = req.user;
+    if (req.query.username) data = { username: req.query.username };
     usuarioController
-      .show(user)
+      .show(data)
+      .then((result) => resp.json(result))
+      .catch((erro) => resp.json(erro));
+  });
+
+  server.post("/conversas", checkAuth, (req, resp) => {
+    const data = req.user;
+    conversaController
+      .iniciarConversa(data)
       .then((result) => resp.json(result))
       .catch((erro) => resp.json(erro));
   });
 
   server.get("/conversas", checkAuth, (req, resp) => {
-    const user = req.user;
+    let data = req.user;
+
+    if (req.query.conversa_id) data = { conversa_id: req.query.conversa_id };
     conversaController
-      .getContacts(user)
+      .buscarMensagens(data)
       .then((result) => resp.json(result))
       .catch((erro) => resp.json(erro));
   });
