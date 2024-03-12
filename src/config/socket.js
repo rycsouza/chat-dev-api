@@ -1,5 +1,5 @@
 const server = require("./custom-express");
-const database = require("./database");
+const Mensagem = require("../app/models/MensagemModel");
 
 const http = require("http");
 const { Server } = require("socket.io");

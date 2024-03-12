@@ -1,10 +1,9 @@
-const connection = require("../../config/database");
 const checkAuth = require("../utils/checkAuth");
 const UsuarioController = require("../controller/http/usuarioController");
 const ConversaController = require("../controller/http/conversaController");
 
-const usuarioController = new UsuarioController(connection);
-const conversaController = new ConversaController(connection);
+const usuarioController = new UsuarioController();
+const conversaController = new ConversaController();
 
 module.exports = (server) => {
   server.post("/login", checkAuth, (req, resp) => {
@@ -24,18 +23,21 @@ module.exports = (server) => {
       .catch((erro) => resp.json(erro));
   });
 
-  server.post("/conversas", checkAuth, (req, resp) => {
-    const data = req.user;
+  server.get("/conversas", checkAuth, (req, resp) => {
+    const user = req.user ? req.user : req.body;
     conversaController
-      .iniciarConversa(data)
+      .buscarConversas(user)
       .then((result) => resp.json(result))
       .catch((erro) => resp.json(erro));
   });
 
-  server.get("/conversas", checkAuth, (req, resp) => {
+  server.get("/mensagens", checkAuth, (req, resp) => {
     let data = req.user;
+    if (!data) throw new Error("Usuário não autenticado");
 
-    if (req.query.conversa_id) data = { conversa_id: req.query.conversa_id };
+    data = req.body
+      ? { ...data, conversa_id: req.body.conversa_id }
+      : { ...data, conversa_id: req.query.conversa_id };
     conversaController
       .buscarMensagens(data)
       .then((result) => resp.json(result))
