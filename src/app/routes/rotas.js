@@ -43,4 +43,23 @@ module.exports = (server) => {
       .then((result) => resp.json(result))
       .catch((erro) => resp.json(erro));
   });
+
+  server.post("/mensagens", checkAuth, (req, resp) => {
+    const user = req.user;
+
+    const data = req.body
+      ? {
+          conversa_id: req.body.conversa_id,
+          mensagem: req.body.mensagem,
+        }
+      : {
+          conversa_id: req.query.conversa_id,
+          mensagem: req.query.mensagem,
+        };
+
+    conversaController
+      .enviarMensagem({ user: user, data: data })
+      .then((result) => resp.json(result))
+      .catch((erro) => resp.json(erro));
+  });
 };

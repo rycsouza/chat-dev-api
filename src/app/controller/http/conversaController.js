@@ -84,12 +84,28 @@ class ConversaController {
 
   async buscarMensagens(data) {
     if (!data.conversa_id) throw new Error("Conversa não encontrada!");
+    try {
+      return await Mensagem.findAll({
+        attributes: ["data_cadastro", "remetente", "mensagem"],
+        where: { conversa_id: data.conversa_id },
+        order: [["data_cadastro", "DESC"]],
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 
-    return await Mensagem.findAll({
-      attributes: ["data_cadastro", "remetente_id", "mensagem"],
-      where: { conversa_id: data.conversa_id },
-      order: [["data_cadastro", "DESC"]],
-    });
+  async enviarMensagem({ user, data }) {
+    try {
+      data.username = await Usuario.findOne({
+        attributes: ["username"],
+        where: { email: user.email },
+      });
+
+      return await Mensagem.create(data);
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

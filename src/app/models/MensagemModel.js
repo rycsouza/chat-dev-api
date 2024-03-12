@@ -16,7 +16,7 @@ const Mensagem = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    remetente_id: {
+    remetente: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -34,6 +34,6 @@ const Mensagem = sequelize.define(
 
 Mensagem.belongsTo(Conversa, { foreignKey: "conversa_id" });
 
-Mensagem.belongsTo(Usuario, { foreignKey: "remetente_id" });
+Mensagem.belongsTo(Usuario, { foreignKey: "remetente" });
 
 module.exports = Mensagem;
