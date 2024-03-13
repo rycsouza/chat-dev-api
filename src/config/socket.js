@@ -1,6 +1,4 @@
 const server = require("./custom-express");
-const Mensagem = require("../app/models/MensagemModel");
-const Conversa = require("../app/models/ConversaModel");
 
 const http = require("http");
 const { Server } = require("socket.io");

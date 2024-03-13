@@ -16,7 +16,9 @@ module.exports = (server) => {
 
   server.get("/profile", checkAuth, (req, resp) => {
     let data = req.user;
-    if (req.query.username) data = { username: req.query.username };
+    data = req.query.username
+      ? { username: req.query.username }
+      : { username: req.body.username };
     usuarioController
       .show(data)
       .then((result) => resp.json(result))
@@ -24,7 +26,7 @@ module.exports = (server) => {
   });
 
   server.get("/conversas", checkAuth, (req, resp) => {
-    const user = req.user ? req.user : req.body;
+    const user = req.user;
     conversaController
       .buscarConversas(user)
       .then((result) => resp.json(result))
@@ -32,14 +34,13 @@ module.exports = (server) => {
   });
 
   server.get("/mensagens", checkAuth, (req, resp) => {
-    let data = req.user;
-    if (!data) throw new Error("Usuário não autenticado");
+    const user = req.user;
 
-    data = req.body
-      ? { ...data, conversa_id: req.body.conversa_id }
-      : { ...data, conversa_id: req.query.conversa_id };
+    const data = req.body
+      ? { conversa_id: req.body.conversa_id }
+      : { conversa_id: req.query.conversa_id };
     conversaController
-      .buscarMensagens(data)
+      .buscarMensagens({ user, data })
       .then((result) => resp.json(result))
       .catch((erro) => resp.json(erro));
   });
@@ -61,5 +62,25 @@ module.exports = (server) => {
       .enviarMensagem({ user: user, data: data })
       .then((result) => resp.json(result))
       .catch((erro) => resp.json(erro));
+  });
+
+  server.get("/", (_, resp) => {
+    resp.json({
+      rotasHTTP: {
+        perfil:
+          "GET /profile \n Headers: GitHub TOKEN \n Sem parâmetros para o usuário logado | username para outro usuário",
+        conversas: "GET /conversas \n Headers: GitHub TOKEN \n Sem parâmetros",
+        BuscarMensagens:
+          "GET /mensagens \n Headers: GitHub TOKEN \n Parâmetros: conversa_id",
+        login: "POST /login \n Headers: GitHub TOKEN \n Sem parâmetros",
+        EnviarMensagens:
+          "POST /mensagens \n Headers: GitHub TOKEN \n Parâmetros: { conversa_id, mensagem }",
+      },
+      eventosSOCKET: {
+        conversar: "Parâmetro: { conversa_id }",
+        enviarMensagem:
+          "Parâmetro: { conversa_id, mensagem } \n Emite um evento novaMensagem, contendo a mensagem",
+      },
+    });
   });
 };

@@ -82,8 +82,10 @@ class ConversaController {
     }
   }
 
-  async buscarMensagens(data) {
+  async buscarMensagens({ user, data }) {
+    if (!user) throw new Error("Usuário não autenticado");
     if (!data.conversa_id) throw new Error("Conversa não encontrada!");
+
     try {
       return await Mensagem.findAll({
         attributes: ["data_cadastro", "remetente", "mensagem"],
