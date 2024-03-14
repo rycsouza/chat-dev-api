@@ -1,8 +1,9 @@
-const { QueryTypes, Op } = require("sequelize");
+const { QueryTypes } = require("sequelize");
 const sequelize = require("../../../config/sequelize");
 const Usuario = require("../../models/UsuarioModel");
 const Mensagem = require("../../models/MensagemModel");
 const Conversa = require("../../models/ConversaModel");
+const openai = require("../../../config/openAI");
 class ConversaController {
   async buscarConversas(usuario) {
     if (!usuario) throw new Error("Usuário não autenticado!");
@@ -19,6 +20,11 @@ class ConversaController {
       if (!username)
         throw new Error("Usuário não existe na nossa base de dados.");
 
+      let conversas = await Usuario.findOne({
+        attributes: ["nome", "username", "avatar"],
+        where: { username: "gpt" },
+      });
+
       const queryConversas = `
       SELECT
         cnv.id conversa_id,
@@ -31,7 +37,7 @@ class ConversaController {
       WHERE FIND_IN_SET('${username}', cnv.participantes) > 0
       AND u.username = SUBSTRING_INDEX(SUBSTRING_INDEX(REPLACE(cnv.participantes, ', ', ','), ',', -1), ',', 1);`;
 
-      let conversas = await sequelize
+      conversas = await sequelize
         .query(queryConversas, { type: QueryTypes.SELECT })
         .then((result) => {
           return result;
@@ -99,14 +105,40 @@ class ConversaController {
 
   async enviarMensagem({ user, data }) {
     try {
-      data.username = await Usuario.findOne({
-        attributes: ["username"],
-        where: { email: user.email },
-      });
+      data.remetente = (
+        await Usuario.findOne({
+          attributes: ["username"],
+          where: { email: user.email },
+        })
+      )?.username;
 
-      return await Mensagem.create(data);
+      if (!data.remetente) throw new Error("Mensagem não enviada!");
+
+      await Mensagem.create(data);
+
+      const participantes = (
+        await Conversa.findOne({
+          attributes: ["participantes"],
+          where: { id: data.conversa_id },
+        })
+      ).participantes.replace(`${data.remetente}, `, "");
+
+      if (participantes != "gpt") return data.mensagem;
+
+      const gptResponse = (
+        await openai.chat.completions.create({
+          messages: [{ role: "system", content: data.mensagem }],
+          model: "gpt-3.5-turbo",
+        })
+      ).choices[0].message.content;
+
+      data.remetente = participantes;
+      data.mensagem = gptResponse;
+      await Mensagem.create(data);
+
+      return { GPT: gptResponse };
     } catch (error) {
-      throw error;
+      throw error.message;
     }
   }
 }
