@@ -123,11 +123,16 @@ class ConversaController {
         })
       ).participantes.replace(`${data.remetente}, `, "");
 
-      if (participantes != "gpt") return data.mensagem;
+      if (participantes != "gpt") return;
 
       const gptResponse = (
         await openai.chat.completions.create({
-          messages: [{ role: "system", content: data.mensagem }],
+          messages: [
+            {
+              role: "system",
+              content: `GPT, você está sendo usado para comunicação com desenvolvedores. \n Responda como um desenvolvedor Senior experiente: \n ${data.mensagem}`,
+            },
+          ],
           model: "gpt-3.5-turbo",
         })
       ).choices[0].message.content;
